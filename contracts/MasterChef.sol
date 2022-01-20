@@ -38,10 +38,6 @@ contract MasterChef is Ownable, ReentrancyGuard {
     }
     // The MyToken TOKEN!
     MyToken public rewardsToken;
-    // Dev address.
-    address public devaddr;
-    // Ecosystem funds address.
-    address public ecosystemaddr;
     // MyToken tokens created per block.
     uint256 public rewardsPerBlock;
     // Info of each pool.
@@ -63,15 +59,11 @@ contract MasterChef is Ownable, ReentrancyGuard {
 
     constructor(
         MyToken _rewardsToken,
-        address _devaddr,
-        address _ecosystemaddr,
         uint256 _rewardsPerBlock,
         uint256 _startBlock,
         uint256 _endBlock
     ) public {
         rewardsToken = _rewardsToken;
-        devaddr = _devaddr;
-        ecosystemaddr = _ecosystemaddr;
         rewardsPerBlock = _rewardsPerBlock;
         startBlock = _startBlock;
         endBlock = _endBlock;
@@ -186,8 +178,6 @@ contract MasterChef is Ownable, ReentrancyGuard {
             multiplier.mul(rewardsPerBlock).mul(pool.allocPoint).div(
                 totalAllocPoint
             );
-        rewardsToken.mint(devaddr, MyTokenReward.mul(2).div(17));
-        rewardsToken.mint(ecosystemaddr, MyTokenReward.div(17));
         rewardsToken.mint(address(this), MyTokenReward);
         pool.accMyTokenPerShare = pool.accMyTokenPerShare.add(
             MyTokenReward.mul(1e12).div(lpSupply)
@@ -255,9 +245,4 @@ contract MasterChef is Ownable, ReentrancyGuard {
         }
     }
 
-    // Update dev address by the previous dev.
-    function dev(address _devaddr) public {
-        require(msg.sender == devaddr, "dev: wut?");
-        devaddr = _devaddr;
-    }
 }
