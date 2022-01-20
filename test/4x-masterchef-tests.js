@@ -16,10 +16,10 @@ describe("MasterChef",  () => {
     mytoken = await MyToken.deploy(ethers.utils.parseEther('100'));
     await mytoken.deployed();
     const startBlock = await ethers.provider.getBlockNumber();
-    const endBlock = startBlock + (5760 * 5); // 5 days, change blocks per day for alternative blockchains
+    const endBlock = startBlock + (50);
     console.log('      Start Block: ',startBlock);
     const MasterChef = await ethers.getContractFactory("MasterChef");
-    masterchef = await MasterChef.deploy(mytoken.address,developer.address,user1.address,ethers.utils.parseEther('100'),startBlock,endBlock);
+    masterchef = await MasterChef.deploy(mytoken.address,ethers.utils.parseEther('100'),startBlock,endBlock);
     await masterchef.deployed();
 
   });
@@ -38,11 +38,23 @@ describe("MasterChef",  () => {
     await masterchef.connect(user1).deposit(0,ethers.utils.parseEther('10'));
     let user1Balance = await mytoken.balanceOf(user1.address);
     console.log('      User1 Balance: ',ethers.utils.formatEther(user1Balance).toString());
-    await mineBlocks(5760);
+    await mineBlocks(10);
     await masterchef.connect(user1).withdraw(0,ethers.utils.parseEther('10'));
     user1Balance = await mytoken.balanceOf(user1.address);
     console.log('      User1 Balance: ',ethers.utils.formatEther(user1Balance).toString());
     expect(await mytoken.totalSupply()).to.gt(20);
+  });
+
+  it("Should try to exploit with flash loan", async () => {
+    await mytoken.transfer(user2.address,ethers.utils.parseEther('10'));
+    await mytoken.connect(user2).approve(masterchef.address,ethers.utils.parseEther('10'));
+    await masterchef.connect(user2).deposit(0,ethers.utils.parseEther('10'));
+    await masterchef.connect(user2).updatePool(0);
+    await masterchef.connect(user2).withdraw(0,ethers.utils.parseEther('10'));
+    await ethers.provider.send('evm_mine');
+    const user2Balance = await mytoken.balanceOf(user2.address);
+    console.log('      User2 Balance: ',ethers.utils.formatEther(user2Balance).toString());
+    expect(user2Balance).to.gt(ethers.utils.parseEther('10'));
   });
 
   it("Should stop pumping out rewards", async () => {
@@ -50,13 +62,13 @@ describe("MasterChef",  () => {
     await masterchef.connect(user1).deposit(0,ethers.utils.parseEther('10'));
     let user1Balance = await mytoken.balanceOf(user1.address);
     console.log('      User1 Balance: ',ethers.utils.formatEther(user1Balance).toString());
-    await mineBlocks(5760*5);
+    await mineBlocks(50);
     await masterchef.connect(user1).withdraw(0,ethers.utils.parseEther('10'));
     const finalUser1Balance = await mytoken.balanceOf(user1.address);
     console.log('      Final User1 Balance: ',ethers.utils.formatEther(finalUser1Balance).toString());
     await mytoken.connect(user1).approve(masterchef.address,ethers.utils.parseEther('10'));
     await masterchef.connect(user1).deposit(0,ethers.utils.parseEther('10'));
-    await mineBlocks(5760*5);
+    await mineBlocks(50);
     await masterchef.connect(user1).withdraw(0,ethers.utils.parseEther('10'));
     user1Balance = await mytoken.balanceOf(user1.address);
     console.log('      User1 Balance: ',ethers.utils.formatEther(user1Balance).toString());
