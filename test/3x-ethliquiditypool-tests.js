@@ -15,7 +15,6 @@ describe("MyToken-ETH Liquidity Pool",  () => {
     await mytoken.deployed();
     const startBlock = await ethers.provider.getBlockNumber();
     const endBlock = startBlock + (50);
-    console.log('      Start Block: ',startBlock);
     const MasterChef = await ethers.getContractFactory("MasterChef");
     masterchef = await MasterChef.deploy(mytoken.address,ethers.utils.parseEther('100'),startBlock,endBlock);
     await masterchef.deployed();
@@ -71,7 +70,6 @@ describe("MyToken-ETH Liquidity Pool",  () => {
     let user1Balance = await mytoken.balanceOf(user1.address);
     expect(user1Balance).to.lt(amount);
     const lpBalance = await uniswapPair.balanceOf(user1.address);
-    console.log('PROVIDER1: ',lpBalance.toString());
     expect(await uniswapPair.balanceOf(owner.address)).to.be.gt('0');
   });
 
